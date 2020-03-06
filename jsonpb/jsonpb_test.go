@@ -429,14 +429,14 @@ var marshalingTests = []struct {
 			proto3pb.Message_PUNS,
 			proto3pb.Message_SLAPSTICK,
 		}},
-		`{"rFunny":["PUNS","SLAPSTICK"]}`},
+		`{"heightInCm":0,"resultCount":"0","trueScotsman":false,"score":0,"rFunny":["PUNS","SLAPSTICK"]}`},
 	{"repeated proto3 enum as int", Marshaler{EnumsAsInts: true},
 		&proto3pb.Message{RFunny: []proto3pb.Message_Humour{
 			proto3pb.Message_PUNS,
 			proto3pb.Message_SLAPSTICK,
 		}},
-		`{"rFunny":[1,2]}`},
-	{"empty value", marshaler, &pb.Simple3{}, `{}`},
+		`{"heightInCm":0,"resultCount":"0","trueScotsman":false,"score":0,"rFunny":[1,2]}`},
+	{"empty value", marshaler, &pb.Simple3{}, `{"dub":0}`},
 	{"empty value emitted", Marshaler{EmitDefaults: true}, &pb.Simple3{}, `{"dub":0}`},
 	{"empty repeated emitted", Marshaler{EmitDefaults: true}, &pb.SimpleSlice3{}, `{"slices":[]}`},
 	{"empty map emitted", Marshaler{EmitDefaults: true}, &pb.SimpleMap3{}, `{"stringy":{}}`},
@@ -874,6 +874,14 @@ var unmarshalingTests = []struct {
 
 	{"required", Unmarshaler{}, `{"str":"hello"}`, &pb.MsgWithRequired{Str: proto.String("hello")}},
 	{"required bytes", Unmarshaler{}, `{"byts": []}`, &pb.MsgWithRequiredBytes{Byts: []byte{}}},
+
+	// numbers and bools are allowed to have default values
+	// empty objects, lists and strings already included in default test cases
+	{"default int32", Unmarshaler{}, `{"i32":0}`, &pb.KnownTypes{I32: &wpb.Int32Value{Value: 0}}},
+	{"default int64", Unmarshaler{}, `{"i64":"0"}`, &pb.KnownTypes{I64: &wpb.Int64Value{Value: 0}}},
+	{"default float", Unmarshaler{}, `{"flt":0.0}`, &pb.KnownTypes{Flt: &wpb.FloatValue{Value: 0.0}}},
+	{"default double", Unmarshaler{}, `{"dbl":0.0}`, &pb.KnownTypes{Dbl: &wpb.DoubleValue{Value: 0.0}}},
+	{"default bool", Unmarshaler{}, `{"bool":false}`, &pb.KnownTypes{Bool: &wpb.BoolValue{Value: false}}},
 }
 
 func TestUnmarshaling(t *testing.T) {

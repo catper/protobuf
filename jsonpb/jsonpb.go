@@ -354,11 +354,7 @@ func (m *Marshaler) marshalObject(out *errWriter, v proto.Message, indent, typeU
 			return err
 		}
 
-		if prop.Enum != "" && isDefaultEnum(value) {
-			firstField = true
-		} else {
-			firstField = false
-		}
+		firstField = prop.Enum != "" && isDefaultEnum(value)
 	}
 
 	// Handle proto2 extensions.
@@ -511,6 +507,11 @@ func (m *Marshaler) marshalField(out *errWriter, prop *proto.Properties, v refle
 }
 
 func isDefaultEnum(v reflect.Value) bool {
+	// a list of enums will always be let through
+	if v.Kind() == reflect.Slice {
+		return false
+	}
+
 	if v.Kind() == reflect.Ptr {
 		if v.Elem().Int() == 0 {
 			return true
@@ -521,6 +522,7 @@ func isDefaultEnum(v reflect.Value) bool {
 		}
 	}
 	return false
+
 }
 
 // marshalValue writes the value to the Writer.
