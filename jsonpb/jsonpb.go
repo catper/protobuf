@@ -309,23 +309,24 @@ func (m *Marshaler) marshalObject(out *errWriter, v proto.Message, indent, typeU
 		}
 
 		if !m.EmitDefaults {
+			// enable emission of 0 and false where applicable
 			switch value.Kind() {
-			case reflect.Bool:
-				if !value.Bool() {
-					continue
-				}
-			case reflect.Int32, reflect.Int64:
-				if value.Int() == 0 {
-					continue
-				}
-			case reflect.Uint32, reflect.Uint64:
-				if value.Uint() == 0 {
-					continue
-				}
-			case reflect.Float32, reflect.Float64:
-				if value.Float() == 0 {
-					continue
-				}
+			// case reflect.Bool:
+			// 	if !value.Bool() {
+			// 		continue
+			// 	}
+			// case reflect.Int32, reflect.Int64:
+			// 	if value.Int() == 0 {
+			// 		continue
+			// 	}
+			// case reflect.Uint32, reflect.Uint64:
+			// 	if value.Uint() == 0 {
+			// 		continue
+			// 	}
+			// case reflect.Float32, reflect.Float64:
+			// 	if value.Float() == 0 {
+			// 		continue
+			// 	}
 			case reflect.String:
 				if value.Len() == 0 {
 					continue
@@ -345,13 +346,19 @@ func (m *Marshaler) marshalObject(out *errWriter, v proto.Message, indent, typeU
 			valueField = sv.Type().Field(0)
 		}
 		prop := jsonProperties(valueField, m.OrigName)
+		// kan man sätta firstField till true om det är en default enum?
 		if !firstField {
 			m.writeSep(out)
 		}
 		if err := m.marshalField(out, prop, value, indent); err != nil {
 			return err
 		}
-		firstField = false
+
+		if prop.Enum != "" && isDefaultEnum(value) {
+			firstField = true
+		} else {
+			firstField = false
+		}
 	}
 
 	// Handle proto2 extensions.
@@ -466,7 +473,7 @@ func (m *Marshaler) marshalTypeURL(out *errWriter, indent, typeURL string) error
 		out.write(indent)
 		out.write(m.Indent)
 	}
-	out.write(`"@type":`)
+	out.write(`"@type":`) // kill this maybe?
 	if m.Indent != "" {
 		out.write(" ")
 	}
@@ -480,20 +487,40 @@ func (m *Marshaler) marshalTypeURL(out *errWriter, indent, typeURL string) error
 
 // marshalField writes field description and value to the Writer.
 func (m *Marshaler) marshalField(out *errWriter, prop *proto.Properties, v reflect.Value, indent string) error {
+	// ignore default enums
+	if prop.Enum != "" && isDefaultEnum(v) {
+		return nil
+	}
+
 	if m.Indent != "" {
 		out.write(indent)
 		out.write(m.Indent)
 	}
+
 	out.write(`"`)
 	out.write(prop.JSONName)
 	out.write(`":`)
 	if m.Indent != "" {
 		out.write(" ")
 	}
+
 	if err := m.marshalValue(out, prop, v, indent); err != nil {
 		return err
 	}
 	return nil
+}
+
+func isDefaultEnum(v reflect.Value) bool {
+	if v.Kind() == reflect.Ptr {
+		if v.Elem().Int() == 0 {
+			return true
+		}
+	} else {
+		if v.Int() == 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // marshalValue writes the value to the Writer.
