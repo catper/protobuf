@@ -5,9 +5,9 @@ package proto3_proto
 
 import (
 	fmt "fmt"
-	proto "github.com/golang/protobuf/proto"
-	test_proto "github.com/golang/protobuf/proto/test_proto"
-	any "github.com/golang/protobuf/ptypes/any"
+	proto "github.com/catper/protobuf/proto"
+	test_proto "github.com/catper/protobuf/proto/test_proto"
+	any "github.com/catper/protobuf/ptypes/any"
 	math "math"
 )
 
